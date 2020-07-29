@@ -1,20 +1,22 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.decorators import login_required
+from django.views.generic import DetailView, UpdateView
 
-# UserUpdateView
-class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    model = User
-    template_name = 'postRequest/create_post.html'
-    fields = ['username']
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        if u_form.is_valid():
+            u_form.save()
+            return redirect('profile')
 
-    def form_valid(self, form):
-        form.instance.author = self.get_object().author
-        return super().form_valid(form)
+    else:
+        u_form = UserUpdateForm(instance=request.user)
 
-    def test_func(self):
-        user = self.get_object()
-        if self.request.user == user:
-            return True
-        return False
+    context = {
+        'u_form': u_form,
+    }
+
+    return render(request, 'postRequest/user_profile.html', context)
